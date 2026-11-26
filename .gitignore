@@ -1,0 +1,11 @@
+# Product requirements (kept local)
+Qlever — Product Requirements Document.md
+
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+*.log
+contracts/cache/
+contracts/out/
