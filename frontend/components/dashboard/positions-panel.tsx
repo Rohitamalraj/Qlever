@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react'
 import { Loader2, Unlock } from 'lucide-react'
+import { useQorUsd, fmtUsd } from '@/hooks/use-qor-usd'
 import { TokenLogo } from '@/components/ui/token-logo'
 import { enrich, fmtPrice, fmtQor } from '@/lib/position-math'
 import type { AssetSymbol } from '@/lib/assets'
@@ -22,6 +23,7 @@ const sealed = <span className="font-mono text-xs text-muted-foreground">Sealed<
 
 export function PositionsPanel({ positions, marks, unlocked, onUnlock, onClosePosition, closingId, isConnected }: PositionsPanelProps) {
   const [tab, setTab] = useState<'positions' | 'trades'>('positions')
+  const qorUsd = useQorUsd()
   const rows = useMemo(() => positions.map((p) => ({ raw: p, e: enrich(p, marks) })), [positions, marks])
   const open = rows.filter((r) => r.e.status === 'open')
   const history = rows.filter((r) => r.e.status !== 'open')
@@ -77,7 +79,7 @@ export function PositionsPanel({ positions, marks, unlocked, onUnlock, onClosePo
                       <span className={`font-mono text-[10px] ${e.direction === 'LONG' ? 'text-green-700' : e.direction === 'SHORT' ? 'text-red-600' : 'text-muted-foreground'}`}>{e.direction}</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end font-mono text-xs">{e.size === null ? sealed : `${fmtQor(e.size)} QOR`}</div>
+                  <div className="flex items-center justify-end font-mono text-xs">{e.size === null ? sealed : <div className="flex flex-col items-end"><span>{fmtQor(e.size)} QOR</span><span className="text-[10px] text-muted-foreground">{fmtUsd(e.size, qorUsd)}</span></div>}</div>
                   <div className="flex items-center justify-end font-mono text-xs">{e.leverage === null ? sealed : `${e.leverage}x`}</div>
                   <div className="flex items-center justify-end font-mono text-xs">{e.entry === null ? sealed : `$${fmtPrice(e.entry)}`}</div>
                   <div className="flex items-center justify-end">
@@ -92,7 +94,7 @@ export function PositionsPanel({ positions, marks, unlocked, onUnlock, onClosePo
                   <div className="flex items-center justify-end">
                     {e.pnl === null ? sealed : (
                       <div className="flex flex-col items-end" title="Theoretical PnL. The vault pays profits only from the forfeited pool and caps losses at the collateral.">
-                        <span className={`font-mono text-xs ${e.pnl >= 0 ? 'text-green-700' : 'text-red-600'}`}>{e.pnl >= 0 ? '+' : ''}{fmtQor(e.pnl)} QOR</span>
+                        <span className={`font-mono text-xs ${e.pnl >= 0 ? 'text-green-700' : 'text-red-600'}`}>{e.pnl >= 0 ? '+' : ''}{fmtQor(e.pnl)} QOR {qorUsd !== null && <span className="opacity-70">({fmtUsd(e.pnl, qorUsd)})</span>}</span>
                         <span className={`font-mono text-[10px] ${e.pnl >= 0 ? 'text-green-700/70' : 'text-red-600/70'}`}>{e.pnlPct !== null && `${e.pnlPct >= 0 ? '+' : ''}${e.pnlPct.toFixed(2)}%`}</span>
                       </div>
                     )}
@@ -127,7 +129,7 @@ export function PositionsPanel({ positions, marks, unlocked, onUnlock, onClosePo
                 <div key={e.id.toString()} className="grid grid-cols-[1.5fr_0.8fr_1fr_1fr_1.2fr] gap-2 px-4 py-3 border-b border-foreground/10 font-mono text-xs">
                   <div className="flex items-center gap-2"><TokenLogo ticker={e.asset ?? 's?'} size="sm" />#{e.id.toString()} {e.ticker ? `${e.ticker} ${e.direction}` : 'Sealed'}</div>
                   <div className="text-right">{e.leverage === null ? '—' : `${e.leverage}x`}</div>
-                  <div className="text-right">{fmtQor(e.collateral)} QOR</div>
+                  <div className="text-right">{fmtQor(e.collateral)} QOR <span className="text-muted-foreground text-[10px]">{fmtUsd(e.collateral, qorUsd)}</span></div>
                   <div className={`text-right ${e.realized === null ? 'text-muted-foreground' : e.realized >= 0 ? 'text-green-700' : 'text-red-600'}`}>{e.realized === null ? '—' : `${e.realized >= 0 ? '+' : ''}${fmtQor(e.realized)} QOR`}</div>
                   <div className={`text-right ${e.status === 'liquidated' ? 'text-red-600' : 'text-muted-foreground'}`}>{e.status === 'liquidated' ? 'LIQUIDATED' : 'CLOSED'}</div>
                 </div>

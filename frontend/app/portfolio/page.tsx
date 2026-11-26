@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAccount, useBalance } from "wagmi";
 import { formatEther } from "viem";
 import { Loader2 } from "lucide-react";
+import { useQorUsd, fmtUsd } from "@/hooks/use-qor-usd";
 import { AppNav } from "@/components/app/app-nav";
 import { TokenLogo } from "@/components/ui/token-logo";
 import { useAssetQuotes } from "@/hooks/use-asset-quotes";
@@ -23,6 +24,7 @@ export default function PortfolioPage() {
   const prices = useAssetQuotes();
   const { pool, oracles } = useChainState();
   const tier = useTier();
+  const qorUsd = useQorUsd();
 
   const marks = useMemo(() => {
     const m: Partial<Record<AssetSymbol, number>> = {};
@@ -82,15 +84,16 @@ export default function PortfolioPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
           {[
-            ["Total Value", `${fmtQor(totalValue)} QOR`, ""],
-            ["Open P&L", `${signed(openPnl)} QOR`, tone(openPnl)],
-            ["Realized P&L", `${signed(realizedPnl)} QOR`, tone(realizedPnl)],
-            ["Open Positions", String(open.length), ""],
-            ["QOR Balance", `${fmtQor(balance)} QOR`, ""],
-          ].map(([k, v, c]) => (
+            ["Total Value", `${fmtQor(totalValue)} QOR`, "", fmtUsd(totalValue, qorUsd)],
+            ["Open P&L", `${signed(openPnl)} QOR`, tone(openPnl), fmtUsd(openPnl, qorUsd)],
+            ["Realized P&L", `${signed(realizedPnl)} QOR`, tone(realizedPnl), fmtUsd(realizedPnl, qorUsd)],
+            ["Open Positions", String(open.length), "", ""],
+            ["QOR Balance", `${fmtQor(balance)} QOR`, "", fmtUsd(balance, qorUsd)],
+          ].map(([k, v, c, u]) => (
             <div key={k} className="border border-foreground/10 p-4">
               <div className="text-xs font-mono text-muted-foreground mb-1">{k}</div>
               <div className={`text-2xl font-mono ${c}`}>{v}</div>
+              {u && <div className="text-xs font-mono text-muted-foreground mt-1">≈ {u}</div>}
             </div>
           ))}
         </div>
@@ -143,7 +146,7 @@ export default function PortfolioPage() {
                         <span className={`font-mono text-xs px-2 py-0.5 ${e.direction === "LONG" ? "bg-green-700/10 text-green-700" : "bg-red-600/10 text-red-600"}`}>{e.direction} {e.leverage}x</span>
                       )}
                     </div>
-                    <div className="font-mono text-xs">{fmtQor(e.collateral)} QOR</div>
+                    <div className="font-mono text-xs">{fmtQor(e.collateral)} QOR<div className="text-[10px] text-muted-foreground">{fmtUsd(e.collateral, qorUsd)}</div></div>
                     <div className="font-mono text-xs">{e.entry === null ? sealed : `$${fmtPrice(e.entry)}`}</div>
                     <div className="font-mono text-xs">{e.mark === null ? "—" : `$${fmtPrice(e.mark)}`}</div>
                     <div className="font-mono text-xs text-red-600">{e.liq === null ? sealed : `$${fmtPrice(e.liq)}`}</div>

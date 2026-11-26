@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { Loader2, Lock } from 'lucide-react'
+import { useQorUsd, fmtUsd } from '@/hooks/use-qor-usd'
 import { LeverageSlider } from '@/components/ui/leverage-slider'
 import { suggestLiqPrice } from '@/lib/qlever'
 import type { TxState } from '@/hooks/use-qlever'
@@ -45,6 +46,7 @@ export function TradeForm({ ticker, currentPrice, maxLeverage, isConnected, isDe
   const liqPrice = liqOverride ? parseFloat(liqOverride) : suggested
 
   const collateralNum = parseFloat(collateral) || 0
+  const qorUsd = useQorUsd()
   const size = collateralNum * leverage
   const validLiq = isLong ? liqPrice > 0 && liqPrice < currentPrice : liqPrice > currentPrice
   const busy = txStatus !== 'idle'
@@ -64,6 +66,7 @@ export function TradeForm({ ticker, currentPrice, maxLeverage, isConnected, isDe
             <span className="font-mono text-xs">QOR{balance ? ` · bal ${balance}` : ''}</span>
           </div>
           <input type="number" min="0" value={collateral} onChange={(e) => setCollateral(e.target.value)} placeholder="0.00" className="w-full text-2xl font-mono bg-transparent border-none outline-none" />
+          <div className="font-mono text-xs text-muted-foreground mt-1">{qorUsd !== null ? `≈ ${fmtUsd(collateralNum, qorUsd)}` : '≈ $ —'}</div>
         </div>
 
         <div className="pt-3 border-t border-foreground/10">
@@ -72,6 +75,7 @@ export function TradeForm({ ticker, currentPrice, maxLeverage, isConnected, isDe
             <span className="font-mono text-xs">{ticker.slice(1)}</span>
           </div>
           <div className="text-xl font-mono">{size.toFixed(4)} QOR</div>
+          <div className="font-mono text-xs text-muted-foreground mt-1">{qorUsd !== null ? `≈ ${fmtUsd(size, qorUsd)}` : ''}{currentPrice > 0 && qorUsd !== null ? ` · ${((size * qorUsd) / currentPrice).toFixed(6)} ${ticker.slice(1)}` : ''}</div>
         </div>
 
         <div className="pt-3 border-t border-foreground/10">

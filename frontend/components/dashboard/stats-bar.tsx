@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { formatEther } from 'viem'
+import { useQorUsd, fmtUsd } from '@/hooks/use-qor-usd'
 import { TokenLogo } from '@/components/ui/token-logo'
 import type { PriceData } from '@/hooks/use-asset-quotes'
 import type { OraclePrice, PoolStats } from '@/hooks/use-qlever'
@@ -43,6 +44,8 @@ function Stat({ label, value, tone, title }: { label: string; value: string; ton
 }
 
 export function StatsBar({ selectedMarket, markets, onMarketChange, marketOpen, data, oracle, pool }: StatsBarProps) {
+  const qorUsd = useQorUsd()
+  const withUsd = (v: bigint | undefined) => (v === undefined ? '—' : `${qor(v)}${qorUsd !== null ? ` (${fmtUsd(Number(formatEther(v)), qorUsd)})` : ''}`)
   const [open, setOpen] = useState(false)
   const ticker = selectedMarket.ticker
   const age = oracle ? Math.max(0, Math.floor(Date.now() / 1000) - oracle.publishTime) : null
@@ -90,6 +93,7 @@ export function StatsBar({ selectedMarket, markets, onMarketChange, marketOpen, 
           <Stat label="Day High" value={usd(data.high24h)} />
           <Stat label="Day Low" value={usd(data.low24h)} />
           <Stat label="Day Open" value={usd(data.open)} />
+          <Stat label="QOR/USD" value={qorUsd !== null ? `$${qorUsd.toPrecision(3)}` : '—'} title="CoinGecko, mainnet QOR. Testnet QOR has no value." />
           <Stat label="Index Price" value={usd(data.price)} title="Finnhub US-equity quote" />
 
           <div className="h-6 w-px bg-foreground/10 flex-shrink-0" />
@@ -100,9 +104,9 @@ export function StatsBar({ selectedMarket, markets, onMarketChange, marketOpen, 
             tone={oracle ? '' : 'text-yellow-600'}
             title={marketOpen ? undefined : 'Outside US market hours the oracle holds the last close'}
           />
-          <Stat label="Open Interest" value={qor(pool?.locked)} title="Collateral locked in open positions" />
+          <Stat label="Open Interest" value={withUsd(pool?.locked)} title="Collateral locked in open positions" />
           <Stat label="Open positions" value={pool ? pool.openCount.toString() : '—'} />
-          <Stat label="Available Liquidity" value={qor(pool?.forfeited)} title="Forfeited collateral pool: the only source of trader profits" />
+          <Stat label="Available Liquidity" value={withUsd(pool?.forfeited)} title="Forfeited collateral pool: the only source of trader profits" />
         </div>
       </div>
     </div>
